@@ -1,16 +1,27 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { ModuleRegistry } from "ag-grid-community";
-import { AllCommunityModule } from "ag-grid-community";
-
-ModuleRegistry.registerModules([AllCommunityModule]);
-
-const ExpensesTable = dynamic(
-  () => import("./ExpensesTable"),
-  { ssr: false }
-);
+import { useEffect, useState } from "react";
+import ExpensesTable from "./ExpensesTable";
+import MonthlyComparisonChart from "./MonthlyComparisonChart";
 
 export default function DashboardClient() {
-  return <ExpensesTable />;
+  const [expenses, setExpenses] = useState<any[]>([]);
+
+  async function refresh() {
+    const res = await fetch("/api/expenses", { cache: "no-store" });
+    if (!res.ok) return;
+    const json = await res.json();
+    setExpenses(json.expenses ?? []);
+  }
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <MonthlyComparisonChart data={expenses} />
+      <ExpensesTable onRefresh={refresh} />
+    </div>
+  );
 }

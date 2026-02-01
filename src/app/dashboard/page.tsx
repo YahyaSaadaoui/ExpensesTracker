@@ -1,10 +1,13 @@
+import Navbar from "./Navbar";
 import DashboardClient from "./DashboardClient";
 
 export default function DashboardPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Monthly Expenses</h1>
-      <DashboardClient />
-    </div>
+    <>
+      <Navbar />
+      <main className="p-6">
+        <DashboardClient />
+      </main>
+    </>
   );
 }
