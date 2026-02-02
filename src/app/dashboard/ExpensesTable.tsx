@@ -4,9 +4,12 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef, CellValueChangedEvent } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
+// ✅ keep alpine, then override with your CSS
 import "ag-grid-community/styles/ag-theme-alpine.css";
+
 import AddConsumptionModal from "./AddConsumptionModal";
 import AddExpenseModal from "./AddExpenseModal";
+
 
 type ExpenseRow = {
   id: string;
@@ -17,26 +20,29 @@ type ExpenseRow = {
   pctUsed: number;
 };
 
-export default function ExpensesTable({ onRefresh }: { onRefresh?: () => void }) {
+export default function ExpensesTable({
+  month,
+  onRefresh,
+}: {
+  month: string;
+  onRefresh?: () => void;
+}) {
   const [rowData, setRowData] = useState<ExpenseRow[]>([]);
   const [selectedExpense, setSelectedExpense] = useState<ExpenseRow | null>(null);
   const [openAddExpense, setOpenAddExpense] = useState(false);
 
   const loadExpenses = useCallback(async () => {
-    const res = await fetch("/api/expenses", { cache: "no-store" });
+    const res = await fetch(`/api/expenses?month=${month}`, { cache: "no-store" });
     if (!res.ok) return;
     const json = await res.json();
     setRowData(Array.isArray(json.expenses) ? json.expenses : []);
-  }, []);
+  }, [month]);
 
   useEffect(() => {
     loadExpenses();
   }, [loadExpenses]);
 
-  async function updateExpense(
-    id: string,
-    patch: Partial<{ name: string; monthly_budget: number }>
-  ) {
+  async function updateExpense(id: string, patch: Partial<{ name: string; monthly_budget: number }>) {
     const res = await fetch(`/api/expenses/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -51,9 +57,7 @@ export default function ExpensesTable({ onRefresh }: { onRefresh?: () => void })
     onRefresh?.();
   }
 
-  const onCellValueChanged = async (
-    e: CellValueChangedEvent<ExpenseRow>
-  ) => {
+  const onCellValueChanged = async (e: CellValueChangedEvent<ExpenseRow>) => {
     const { data, colDef, oldValue, newValue } = e;
     if (!data || oldValue === newValue) return;
 
@@ -64,7 +68,7 @@ export default function ExpensesTable({ onRefresh }: { onRefresh?: () => void })
     if (colDef.field === "monthly_budget") {
       const value = Number(newValue);
       if (Number.isNaN(value) || value <= 0) {
-        alert("Budget must be > 0");
+        alert("Budget must be a positive number");
         await loadExpenses();
         return;
       }
@@ -73,78 +77,117 @@ export default function ExpensesTable({ onRefresh }: { onRefresh?: () => void })
   };
 
   const columns = useMemo<ColDef<ExpenseRow>[]>(() => [
-    { field: "name", editable: true },
+    { field: "name", headerName: "Name", editable: true },
     {
       field: "monthly_budget",
       headerName: "Budget",
       editable: true,
-      valueFormatter: p => `${p.value} DH`,
+      cellEditor: "agNumberCellEditor",
+      valueFormatter: (p) => `${p.value} DH`,
     },
     {
       field: "consumed",
-      editable: true,
-      valueFormatter: p => `${p.value} DH`,
+      headerName: "Consumed",
+      editable: false,
+      valueFormatter: (p) => `${p.value} DH`,
     },
-    {
-      field: "remaining",
-      valueFormatter: p => `${p.value} DH`,
-    },
+    { field: "remaining", headerName: "Remaining", valueFormatter: (p) => `${p.value} DH` },
     {
       field: "pctUsed",
       headerName: "% Used",
-      valueFormatter: p => `${p.value}%`,
-      cellStyle: p => {
-        if (p.value < 50) return { color: "#22c55e", fontWeight: "700" };
-        if (p.value < 80) return { color: "#f59e0b", fontWeight: "700" };
-        return { color: "#ef4444", fontWeight: "800" };
-      },
+      valueFormatter: (p) => `${p.value}%`,
     },
     {
       headerName: "",
-      width: 180,
+      width: 160,
       sortable: false,
+      filter: false,
       cellRenderer: (params: any) => (
         <div className="flex gap-2">
           <button
+            onClick={() => setSelectedExpense(params.data)}
+            className="btn-apple"
+          >
+            + Add
+          </button>
+          <button
             onClick={async () => {
               if (!confirm("Delete this expense?")) return;
-              await fetch(`/api/expenses/${params.data.id}`, {
-                method: "DELETE",
-              });
+              await fetch(`/api/expenses/${params.data.id}`, { method: "DELETE" });
               await loadExpenses();
               onRefresh?.();
             }}
-            className="btn btn-danger"
+            className="btn-apple-danger"
           >
             Delete
           </button>
-      </div>
-
+        </div>
       ),
     },
-  ], [onRefresh]);
+  ], [loadExpenses, onRefresh]);
+
 
   return (
     <>
-      <div className="flex justify-end mb-3">
-        <button
-          onClick={() => setOpenAddExpense(true)}
-          className="px-4 py-2 rounded-xl bg-white text-black hover:bg-white/90"
-        >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {/* Excel import back */}
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const form = new FormData();
+              form.append("file", file);
+
+              const res = await fetch("/api/import/expenses", { method: "POST", body: form });
+              if (!res.ok) {
+                alert("Failed to import Excel file");
+                return;
+              }
+
+              await loadExpenses();
+              onRefresh?.();
+            }}
+            className="text-sm text-white/70"
+          />
+        </div>
+
+        <button onClick={() => setOpenAddExpense(true)} className="btn-apple">
           + Add Expense
         </button>
       </div>
 
-      <div className="rounded-2xl bg-black/40 border border-white/10">
-        <div className="ag-theme-alpine ag-theme-dark" style={{ height: 420 }}>
+      <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
+        <div
+          className="ag-theme-alpine-dark w-full"
+          style={{ height: 620 }}
+        >
           <AgGridReact
-            theme="legacy"
+            theme="legacy" 
             rowData={rowData}
             columnDefs={columns}
             onCellValueChanged={onCellValueChanged}
+            defaultColDef={{ sortable: true, filter: true, resizable: true }}
+            headerHeight={52}
+            rowHeight={52}
+            pagination={true}              
+            paginationPageSize={10}      
           />
         </div>
       </div>
+
+      {openAddExpense && (
+        <AddExpenseModal
+          onClose={() => setOpenAddExpense(false)}
+          onAdded={async () => {
+            setOpenAddExpense(false);
+            await loadExpenses();
+            onRefresh?.();
+          }}
+        />
+      )}
 
       {selectedExpense && (
         <AddConsumptionModal
@@ -152,17 +195,6 @@ export default function ExpensesTable({ onRefresh }: { onRefresh?: () => void })
           onClose={() => setSelectedExpense(null)}
           onAdded={async () => {
             setSelectedExpense(null);
-            await loadExpenses();
-            onRefresh?.();
-          }}
-        />
-      )}
-
-      {openAddExpense && (
-        <AddExpenseModal
-          onClose={() => setOpenAddExpense(false)}
-          onAdded={async () => {
-            setOpenAddExpense(false);
             await loadExpenses();
             onRefresh?.();
           }}

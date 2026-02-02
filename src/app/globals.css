@@ -73,3 +73,57 @@ body {
   opacity: 0.5;
   pointer-events: none;
 }
+
+
+
+
+/* Apple-ish small buttons */
+.btn-apple {
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.92);
+  transition: transform .08s ease, background .15s ease;
+}
+.btn-apple:hover { background: rgba(255,255,255,0.14); }
+.btn-apple:active { transform: scale(0.98); }
+
+.btn-apple-danger {
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(220,38,38,0.12);
+  border: 1px solid rgba(220,38,38,0.25);
+  color: rgba(255,255,255,0.92);
+}
+.btn-apple-danger:hover { background: rgba(220,38,38,0.18); }
+
+/* AG Grid dark overrides (keep using alpine css) */
+.ag-dark .ag-root-wrapper {
+  background: transparent;
+  border: none;
+}
+.ag-dark .ag-header {
+  background: rgba(0,0,0,0.55);
+  color: rgba(255,255,255,0.85);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.ag-dark .ag-row {
+  background: rgba(0,0,0,0.25);
+  color: rgba(255,255,255,0.88);
+}
+.ag-dark .ag-row:hover {
+  background: rgba(255,255,255,0.06);
+}
+.ag-dark .ag-cell {
+  border-color: rgba(255,255,255,0.06);
+}
+.ag-dark .ag-paging-panel {
+  background: rgba(0,0,0,0.35);
+  color: rgba(255,255,255,0.75);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
