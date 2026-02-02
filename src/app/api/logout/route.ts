@@ -1,3 +1,4 @@
+// src/app/api/logout/route.ts
 import { clearSessionCookie } from "@/lib/auth";
 
 export async function POST() {

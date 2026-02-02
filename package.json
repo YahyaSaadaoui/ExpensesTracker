@@ -13,6 +13,7 @@
     "ag-grid-community": "^35.0.1",
     "ag-grid-react": "^35.0.1",
     "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.3",
     "next": "16.1.6",
     "pdf-lib": "^1.17.1",
     "react": "19.2.3",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

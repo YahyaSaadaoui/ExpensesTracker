@@ -1,5 +1,8 @@
 "use client";
 
+// 👇 THIS LINE IS CRITICAL
+import "@/lib/agGrid";
+
 import { useEffect, useState } from "react";
 import ExpensesTable from "./ExpensesTable";
 import MonthlyComparisonChart from "./MonthlyComparisonChart";
@@ -20,8 +23,8 @@ export default function DashboardClient() {
 
   return (
     <div className="space-y-6">
-      <MonthlyComparisonChart data={expenses} />
       <ExpensesTable onRefresh={refresh} />
+      <MonthlyComparisonChart data={expenses} />
     </div>
   );
 }

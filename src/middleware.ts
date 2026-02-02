@@ -1,7 +1,8 @@
+// src/middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC = ["/api/login", "/api/health"];
+const PUBLIC = ["/api/login", "/api/logout", "/api/health"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

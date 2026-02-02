@@ -1,62 +1,56 @@
 import { supabaseServer } from "@/lib/supabaseServer";
+import * as XLSX from "xlsx";
+import { num } from "@/lib/money";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const sb = supabaseServer();
 
-  const form = await req.formData();
-  const file = form.get("file") as File | null;
+  const formData = await req.formData();
+  const file = formData.get("file") as File | null;
 
-  if (!file) {
-    return Response.json({ error: "No file" }, { status: 400 });
-  }
+  if (!file) return Response.json({ error: "No file uploaded" }, { status: 400 });
 
-  const text = await file.text();
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  const buffer = await file.arrayBuffer();
+  const workbook = XLSX.read(buffer, { type: "array" });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-  const [, ...rows] = lines; // skip header
+  // Reads rows as objects by header names in row 1
+  const excelRows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, {
+    defval: "",
+  });
 
-  let salary: number | null = null;
-  const expenses: { name: string; monthly_budget: number }[] = [];
+  // Expect columns: "Category" and "Amount (DH)"
+  const expensesToUpsert: { name: string; monthly_budget: number; active: boolean }[] = [];
 
-  for (const row of rows) {
-    const [rawName, rawAmount] = row.split(",");
-    const name = rawName.trim();
-    const amount = Number(rawAmount);
+  for (const row of excelRows) {
+    const name = String(row["Category"] ?? "").trim();
+    const amount = num(row["Amount (DH)"]);
 
-    if (!name || isNaN(amount)) continue;
+    if (!name) continue;
+    if (amount <= 0) continue;
 
-    if (name.toLowerCase() === "income") {
-      salary = amount;
-      continue;
-    }
+    const lower = name.toLowerCase();
+    if (lower === "income") continue;  // ignore salary here (separate feature)
+    if (lower === "saving") continue;  // ignore saving category
 
-    if (name.toLowerCase() === "saving") {
-      continue;
-    }
-
-    expenses.push({
+    expensesToUpsert.push({
       name,
       monthly_budget: amount,
+      active: true,
     });
   }
 
-  // Update salary if present
-  if (salary !== null) {
-    await sb.from("settings").upsert({ id: 1, salary });
+  if (expensesToUpsert.length === 0) {
+    return Response.json({ importedExpenses: 0 }, { status: 200 });
   }
 
-  // Upsert expenses
-  for (const e of expenses) {
-    await sb
-      .from("expenses")
-      .upsert(
-        { name: e.name, monthly_budget: e.monthly_budget },
-        { onConflict: "name" }
-      );
-  }
+  const { error } = await sb
+    .from("expenses")
+    .upsert(expensesToUpsert, { onConflict: "name" });
 
-  return Response.json({
-    imported: expenses.length,
-    salaryUpdated: salary !== null,
-  });
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  return Response.json({ importedExpenses: expensesToUpsert.length }, { status: 200 });
 }

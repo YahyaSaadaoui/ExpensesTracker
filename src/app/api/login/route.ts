@@ -1,8 +1,5 @@
-import {
-  verifyAdminPassword,
-  signSession,
-  buildSessionCookie,
-} from "@/lib/auth";
+// src/app/api/login/route.ts
+import { verifyAdminPassword, signSession, buildSessionCookie } from "@/lib/auth";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -17,8 +14,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "Invalid password" }, { status: 401 });
   }
 
-  const exp = Date.now() + 1000 * 60 * 60 * 24 * 30; // 30 days
-  const token = signSession({ admin: true, exp });
+  const token = signSession({ admin: true });
 
   const res = Response.json({ ok: true });
   res.headers.set("Set-Cookie", buildSessionCookie(token));

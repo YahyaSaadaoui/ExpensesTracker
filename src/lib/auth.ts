@@ -1,51 +1,45 @@
-import crypto from "crypto";
+// src/lib/auth.ts
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { supabaseServer } from "@/lib/supabaseServer";
 
 const COOKIE_NAME = "et_session";
 
-function hmac(data: string) {
-  const secret = process.env.SESSION_SECRET!;
-  return crypto.createHmac("sha256", secret).update(data).digest("hex");
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET) throw new Error("SESSION_SECRET is missing");
+
+export async function verifyAdminPassword(password: string): Promise<boolean> {
+  const sb = supabaseServer();
+
+  const { data, error } = await sb
+    .from("users")
+    .select("password_hash")
+    .eq("username", "admin")
+    .single();
+
+  if (error || !data?.password_hash) return false;
+
+  return bcrypt.compare(password, data.password_hash);
 }
 
-export function signSession(payload: object) {
-  const json = JSON.stringify(payload);
-  const b64 = Buffer.from(json).toString("base64url");
-  const sig = hmac(b64);
-  return `${b64}.${sig}`;
-}
-
-export function verifySession(token: string | undefined) {
-  if (!token) return null;
-  const [b64, sig] = token.split(".");
-  if (!b64 || !sig) return null;
-
-  const expected = hmac(b64);
-  if (sig !== expected) return null;
-
-  try {
-    const json = Buffer.from(b64, "base64url").toString("utf8");
-    const data = JSON.parse(json) as { admin: boolean; exp: number };
-    if (Date.now() > data.exp) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-export async function verifyAdminPassword(password: string) {
-  const adminPassword = process.env.ADMIN_PASSWORD!;
-  if (!adminPassword) throw new Error("Missing ADMIN_PASSWORD");
-
-  // personal app → acceptable
-  const hash = await bcrypt.hash(adminPassword, 10);
-  return bcrypt.compare(password, hash);
+export function signSession(payload: { admin: boolean }) {
+  // exp should be seconds since epoch for JWT standard
+  const expSeconds = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30; // 30 days
+  return jwt.sign({ ...payload, exp: expSeconds }, SESSION_SECRET);
 }
 
 export function buildSessionCookie(token: string) {
-  return `${COOKIE_NAME}=${token}; HttpOnly; Path=/; SameSite=Strict; Secure`;
+  const isProd = process.env.NODE_ENV === "production";
+
+  // IMPORTANT: cookie name = et_session (same as middleware)
+  return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${
+    isProd ? "; Secure" : ""
+  }`;
 }
 
 export function clearSessionCookie() {
-  return `${COOKIE_NAME}=; Path=/; HttpOnly; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  const isProd = process.env.NODE_ENV === "production";
+  return `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${
+    isProd ? "; Secure" : ""
+  }`;
 }

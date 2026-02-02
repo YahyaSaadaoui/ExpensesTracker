@@ -4,10 +4,13 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 
 export default function MonthlyComparisonChart({ data }: { data: any[] }) {
   return (
-    <div className="rounded-xl border bg-white p-4 shadow-sm">
-      <h2 className="mb-3 text-lg font-semibold">Budget vs Consumed</h2>
+   <div className="rounded-2xl bg-[#0b0b0b] p-4 shadow-sm">
+    <h3 className="mb-3 text-sm font-semibold text-gray-300">
+      Monthly overview
+    </h3>
 
-      <ResponsiveContainer width="100%" height={320}>
+    <div className="h-[220px]">
+      <ResponsiveContainer width="40%" height={320}>
         <BarChart data={data}>
           <XAxis dataKey="name" />
           <YAxis />
@@ -17,5 +20,6 @@ export default function MonthlyComparisonChart({ data }: { data: any[] }) {
         </BarChart>
       </ResponsiveContainer>
     </div>
+  </div>
   );
 }

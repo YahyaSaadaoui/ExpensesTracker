@@ -24,3 +24,52 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+.ag-theme-dark {
+  --ag-background-color: #0b0b0b;
+  --ag-header-background-color: #111111;
+  --ag-odd-row-background-color: #0f0f0f;
+  --ag-row-hover-color: #1a1a1a;
+  --ag-border-color: #262626;
+
+  --ag-foreground-color: #e5e5e5;
+  --ag-secondary-foreground-color: #9ca3af;
+  --ag-header-foreground-color: #e5e5e5;
+
+  --ag-font-size: 14px;
+}
+
+
+
+/* Apple-like buttons */
+.btn {
+  @apply inline-flex items-center justify-center
+         rounded-xl px-3 py-1.5
+         text-xs font-medium
+         transition-all duration-150
+         select-none;
+}
+
+/* Primary (Add) */
+.btn-primary {
+  background: #1c1c1e;
+  color: #f5f5f7;
+}
+.btn-primary:hover {
+  background: #2c2c2e;
+}
+
+/* Destructive (Delete) */
+.btn-danger {
+  color: #ff453a;
+}
+.btn-danger:hover {
+  background: rgba(255, 69, 58, 0.12);
+}
+
+/* Disabled */
+.btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
