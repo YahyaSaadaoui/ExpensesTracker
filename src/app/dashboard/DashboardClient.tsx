@@ -137,7 +137,8 @@ export default function DashboardClient() {
       {/* ──────────────────────────────
          TABLE (full width, below)
          ────────────────────────────── */}
-      <section className="min-w-0">
+      <section className="flex-1 w-full">
+
         <ExpensesTable
           month={month}
           loading={loading}

@@ -104,23 +104,25 @@ export default function ExpensesTable({
       filter: false,
       cellRenderer: (params: any) => (
         <div className="flex gap-2">
-          <button
-            onClick={() => setSelectedExpense(params.data)}
-            className="btn-apple"
-          >
-            + Add
-          </button>
-          <button
-            onClick={async () => {
-              if (!confirm("Delete this expense?")) return;
-              await fetch(`/api/expenses/${params.data.id}`, { method: "DELETE" });
-              await loadExpenses();
-              onRefresh?.();
-            }}
-            className="btn-apple-danger"
-          >
-            Delete
-          </button>
+        <button
+          onClick={() => setSelectedExpense(params.data)}
+          className="btn-apple-table"
+        >
+          + Add
+        </button>
+
+        <button
+          onClick={async () => {
+            if (!confirm("Delete this expense?")) return;
+            await fetch(`/api/expenses/${params.data.id}`, { method: "DELETE" });
+            await loadExpenses();
+            onRefresh?.();
+          }}
+          className="btn-apple-table-danger"
+        >
+          Delete
+        </button>
+
         </div>
       ),
     },
@@ -159,22 +161,29 @@ export default function ExpensesTable({
         </button>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
-        <div
-          className="ag-theme-alpine-dark w-full"
-          style={{ height: 620 }}
-        >
-          <AgGridReact
-            theme="legacy" 
-            rowData={rowData}
-            columnDefs={columns}
-            onCellValueChanged={onCellValueChanged}
-            defaultColDef={{ sortable: true, filter: true, resizable: true }}
-            headerHeight={52}
-            rowHeight={52}
-            pagination={true}              
-            paginationPageSize={10}      
-          />
+      <div className="rounded-2xl border border-white/10 bg-black/40 p-3 w-full overflow-x-auto">
+      <div
+        className="ag-theme-alpine-dark w-full min-w-[1200px]"
+        style={{ height: 620 }}
+      >
+
+      <AgGridReact
+        theme="legacy"
+        rowData={rowData}
+        columnDefs={columns}
+        onCellValueChanged={onCellValueChanged}
+        defaultColDef={{
+          sortable: true,
+          filter: true,
+          resizable: true,
+          minWidth: 140,
+        }}
+        headerHeight={52}
+        rowHeight={52}
+        pagination
+        paginationPageSize={10}
+      />
+
         </div>
       </div>
 
