@@ -36,3 +36,25 @@ export async function POST(req: Request) {
 
   return Response.json({ consumption: data }, { status: 201 });
 }
+
+export async function GET(req: Request) {
+  const sb = supabaseServer();
+  const url = new URL(req.url);
+  const expenseId = url.searchParams.get("expense_id");
+
+  if (!expenseId) {
+    return Response.json({ error: "expense_id required" }, { status: 400 });
+  }
+
+  const { data, error } = await sb
+    .from("consumptions")
+    .select("id,amount,date,note,created_at")
+    .eq("expense_id", expenseId)
+    .order("date", { ascending: false });
+
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  return Response.json({ consumptions: data ?? [] });
+}

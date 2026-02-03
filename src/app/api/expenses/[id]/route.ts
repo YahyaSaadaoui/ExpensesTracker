@@ -1,51 +1,58 @@
 import { supabaseServer } from "@/lib/supabaseServer";
 import { num } from "@/lib/money";
+import { recomputePeriodForDate } from "@/lib/periodRecompute";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await params;
   const sb = supabaseServer();
-
   const body = await req.json().catch(() => null);
 
   const patch: any = {};
-  if (typeof body?.name === "string") patch.name = body.name;
-  if (body?.monthly_budget !== undefined)
-    patch.monthly_budget = num(body.monthly_budget);
-  if (typeof body?.active === "boolean") patch.active = body.active;
+  if (body?.amount !== undefined) patch.amount = num(body.amount);
+  if (typeof body?.note === "string") patch.note = body.note;
+  if (typeof body?.date === "string") patch.date = body.date;
 
-  if (Object.keys(patch).length === 0) {
+  if (!Object.keys(patch).length) {
     return Response.json({ error: "Nothing to update" }, { status: 400 });
   }
 
   const { data, error } = await sb
-    .from("expenses")
+    .from("consumptions")
     .update(patch)
-    .eq("id", id)
-    .select("id,name,monthly_budget,active,created_at")
+    .eq("id", params.id)
+    .select("date")
     .single();
 
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  return Response.json({ expense: data });
+  // 🔁 recompute period for that date
+  await recomputePeriodForDate(sb, new Date(data.date));
+
+  return Response.json({ ok: true });
 }
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await params;
   const sb = supabaseServer();
 
-  const { error } = await sb.from("expenses").delete().eq("id", id);
+  const { data, error } = await sb
+    .from("consumptions")
+    .delete()
+    .eq("id", params.id)
+    .select("date")
+    .single();
 
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
+
+  await recomputePeriodForDate(sb, new Date(data.date));
 
   return Response.json({ ok: true });
 }

@@ -80,3 +80,30 @@ export async function GET(req: Request) {
     expenses: enriched,
   });
 }
+export async function POST(req: Request) {
+  const sb = supabaseServer();
+  const body = await req.json().catch(() => null);
+
+  const name = String(body?.name ?? "").trim();
+  const monthly_budget = num(body?.monthly_budget);
+
+  if (!name || monthly_budget <= 0) {
+    return Response.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
+  const { data, error } = await sb
+    .from("expenses")
+    .insert({
+      name,
+      monthly_budget,
+      active: true,
+    })
+    .select("id,name,monthly_budget,active,created_at")
+    .single();
+
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  return Response.json({ expense: data }, { status: 201 });
+}

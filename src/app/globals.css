@@ -157,3 +157,15 @@ body {
 .btn-apple-table-danger:hover {
   background: rgba(220,38,38,0.18);
 }
+
+/* Make month picker icon white in dark mode */
+input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+/* Optional: hover effect */
+input[type="month"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}

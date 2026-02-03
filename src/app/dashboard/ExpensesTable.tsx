@@ -4,12 +4,12 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef, CellValueChangedEvent } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
-// ✅ keep alpine, then override with your CSS
 import "ag-grid-community/styles/ag-theme-alpine.css";
 
 import AddConsumptionModal from "./AddConsumptionModal";
 import AddExpenseModal from "./AddExpenseModal";
-
+import ViewConsumptionsModal from "./ViewConsumptionsModal";
+import DeleteExpenseModal from "./DeleteExpenseModal";
 
 type ExpenseRow = {
   id: string;
@@ -29,7 +29,12 @@ export default function ExpensesTable({
 }) {
   const [rowData, setRowData] = useState<ExpenseRow[]>([]);
   const [selectedExpense, setSelectedExpense] = useState<ExpenseRow | null>(null);
+  const [viewExpense, setViewExpense] = useState<ExpenseRow | null>(null);
   const [openAddExpense, setOpenAddExpense] = useState(false);
+  const [deleteExpense, setDeleteExpense] = useState<ExpenseRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+
 
   const loadExpenses = useCallback(async () => {
     const res = await fetch(`/api/expenses?month=${month}`, { cache: "no-store" });
@@ -42,7 +47,10 @@ export default function ExpensesTable({
     loadExpenses();
   }, [loadExpenses]);
 
-  async function updateExpense(id: string, patch: Partial<{ name: string; monthly_budget: number }>) {
+  async function updateExpense(
+    id: string,
+    patch: Partial<{ name: string; monthly_budget: number }>
+  ) {
     const res = await fetch(`/api/expenses/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -54,10 +62,13 @@ export default function ExpensesTable({
       await loadExpenses();
       return;
     }
+
     onRefresh?.();
   }
 
-  const onCellValueChanged = async (e: CellValueChangedEvent<ExpenseRow>) => {
+  const onCellValueChanged = async (
+    e: CellValueChangedEvent<ExpenseRow>
+  ) => {
     const { data, colDef, oldValue, newValue } = e;
     if (!data || oldValue === newValue) return;
 
@@ -91,7 +102,11 @@ export default function ExpensesTable({
       editable: false,
       valueFormatter: (p) => `${p.value} DH`,
     },
-    { field: "remaining", headerName: "Remaining", valueFormatter: (p) => `${p.value} DH` },
+    {
+      field: "remaining",
+      headerName: "Remaining",
+      valueFormatter: (p) => `${p.value} DH`,
+    },
     {
       field: "pctUsed",
       headerName: "% Used",
@@ -99,94 +114,111 @@ export default function ExpensesTable({
     },
     {
       headerName: "",
-      width: 160,
+      width: 200,
       sortable: false,
       filter: false,
       cellRenderer: (params: any) => (
         <div className="flex gap-2">
-        <button
-          onClick={() => setSelectedExpense(params.data)}
-          className="btn-apple-table"
-        >
-          + Add
-        </button>
+          <button
+            onClick={() => setSelectedExpense(params.data)}
+            className="btn-apple-table"
+          >
+            + Add
+          </button>
 
-        <button
-          onClick={async () => {
-            if (!confirm("Delete this expense?")) return;
-            await fetch(`/api/expenses/${params.data.id}`, { method: "DELETE" });
-            await loadExpenses();
-            onRefresh?.();
-          }}
-          className="btn-apple-table-danger"
-        >
-          Delete
-        </button>
+          <button
+            onClick={() => setViewExpense(params.data)}
+            className="btn-apple-table"
+          >
+            View
+          </button>
 
+          <button
+            onClick={async () => {
+              <button
+                onClick={() => setDeleteExpense(params.data)}
+                className="btn-apple-table-danger"
+              >
+                Delete
+              </button>
+              await fetch(`/api/expenses/${params.data.id}`, {
+                method: "DELETE",
+              });
+              await loadExpenses();
+              onRefresh?.();
+            }}
+            className="btn-apple-table-danger"
+          >
+            Delete
+          </button>
         </div>
       ),
     },
   ], [loadExpenses, onRefresh]);
 
-
   return (
     <>
+      {/* HEADER */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {/* Excel import back */}
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              const form = new FormData();
-              form.append("file", file);
+        <input
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const form = new FormData();
+            form.append("file", file);
 
-              const res = await fetch("/api/import/expenses", { method: "POST", body: form });
-              if (!res.ok) {
-                alert("Failed to import Excel file");
-                return;
-              }
+            const res = await fetch("/api/import/expenses", {
+              method: "POST",
+              body: form,
+            });
 
-              await loadExpenses();
-              onRefresh?.();
-            }}
-            className="text-sm text-white/70"
-          />
-        </div>
+            if (!res.ok) {
+              alert("Failed to import Excel file");
+              return;
+            }
 
-        <button onClick={() => setOpenAddExpense(true)} className="btn-apple">
+            await loadExpenses();
+            onRefresh?.();
+          }}
+          className="text-sm text-white/70"
+        />
+
+        <button
+          onClick={() => setOpenAddExpense(true)}
+          className="btn-apple"
+        >
           + Add Expense
         </button>
       </div>
 
+      {/* TABLE */}
       <div className="rounded-2xl border border-white/10 bg-black/40 p-3 w-full overflow-x-auto">
-      <div
-        className="ag-theme-alpine-dark w-full min-w-[1200px]"
-        style={{ height: 620 }}
-      >
-
-      <AgGridReact
-        theme="legacy"
-        rowData={rowData}
-        columnDefs={columns}
-        onCellValueChanged={onCellValueChanged}
-        defaultColDef={{
-          sortable: true,
-          filter: true,
-          resizable: true,
-          minWidth: 140,
-        }}
-        headerHeight={52}
-        rowHeight={52}
-        pagination
-        paginationPageSize={10}
-      />
-
+        <div
+          className="ag-theme-alpine-dark w-full min-w-[1200px]"
+          style={{ height: 620 }}
+        >
+          <AgGridReact
+            theme="legacy"
+            rowData={rowData}
+            columnDefs={columns}
+            onCellValueChanged={onCellValueChanged}
+            defaultColDef={{
+              sortable: true,
+              filter: true,
+              resizable: true,
+              minWidth: 140,
+            }}
+            headerHeight={52}
+            rowHeight={52}
+            pagination
+            paginationPageSize={20}
+          />
         </div>
       </div>
 
+      {/* MODALS */}
       {openAddExpense && (
         <AddExpenseModal
           onClose={() => setOpenAddExpense(false)}
@@ -209,6 +241,39 @@ export default function ExpensesTable({
           }}
         />
       )}
+
+      {viewExpense && (
+        <ViewConsumptionsModal
+          expense={viewExpense}
+          onClose={() => setViewExpense(null)}
+          onChanged={async () => {
+            setViewExpense(null);
+            await loadExpenses();
+            onRefresh?.();
+          }}
+        />
+      )}
+      {deleteExpense && (
+      <DeleteExpenseModal
+        expenseName={deleteExpense.name}
+        loading={deleting}
+        onCancel={() => setDeleteExpense(null)}
+        onConfirm={async () => {
+          try {
+            setDeleting(true);
+            await fetch(`/api/expenses/${deleteExpense.id}`, {
+              method: "DELETE",
+            });
+            setDeleteExpense(null);
+            await loadExpenses();
+            onRefresh?.();
+          } finally {
+            setDeleting(false);
+          }
+        }}
+      />
+    )}
+
     </>
   );
 }
