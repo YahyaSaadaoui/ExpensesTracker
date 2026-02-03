@@ -1,58 +1,66 @@
 import { supabaseServer } from "@/lib/supabaseServer";
 import { num } from "@/lib/money";
-import { recomputePeriodForDate } from "@/lib/periodRecompute";
+
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const sb = supabaseServer();
   const body = await req.json().catch(() => null);
 
-  const patch: any = {};
-  if (body?.amount !== undefined) patch.amount = num(body.amount);
-  if (typeof body?.note === "string") patch.note = body.note;
-  if (typeof body?.date === "string") patch.date = body.date;
+  const patch: Record<string, any> = {};
 
-  if (!Object.keys(patch).length) {
-    return Response.json({ error: "Nothing to update" }, { status: 400 });
+  if (typeof body?.name === "string") {
+    patch.name = body.name.trim();
+  }
+
+  if (body?.monthly_budget !== undefined) {
+    patch.monthly_budget = num(body.monthly_budget);
+  }
+
+  if (typeof body?.active === "boolean") {
+    patch.active = body.active;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return Response.json(
+      { error: "Nothing to update" },
+      { status: 400 }
+    );
   }
 
   const { data, error } = await sb
-    .from("consumptions")
+    .from("expenses")
     .update(patch)
-    .eq("id", params.id)
-    .select("date")
+    .eq("id", id)
+    .select("id,name,monthly_budget,active,created_at")
     .single();
 
   if (error) {
+    console.error("PATCH expense failed:", error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  // 🔁 recompute period for that date
-  await recomputePeriodForDate(sb, new Date(data.date));
-
-  return Response.json({ ok: true });
+  return Response.json({ expense: data });
 }
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params; 
   const sb = supabaseServer();
-
-  const { data, error } = await sb
-    .from("consumptions")
-    .delete()
-    .eq("id", params.id)
-    .select("date")
-    .single();
+  const { error } = await sb
+    .from("expenses")
+    .update({ active: false })
+    .eq("id", id);
 
   if (error) {
+    console.error("DELETE expense failed:", error);
     return Response.json({ error: error.message }, { status: 500 });
   }
-
-  await recomputePeriodForDate(sb, new Date(data.date));
 
   return Response.json({ ok: true });
 }

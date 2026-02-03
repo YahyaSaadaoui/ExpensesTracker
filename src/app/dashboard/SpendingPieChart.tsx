@@ -80,8 +80,12 @@ export default function SpendingPieChart({ refreshKey }: Props) {
             </Pie>
 
             <Tooltip
-              formatter={(value: number) => `${value} DH`}
+              formatter={(value) => {
+                if (value == null) return "0 DH";
+                return `${Number(value)} DH`;
+              }}
             />
+
           </PieChart>
         </ResponsiveContainer>
       </div>

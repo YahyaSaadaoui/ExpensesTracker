@@ -22,18 +22,21 @@ type ExpenseRow = {
 
 export default function ExpensesTable({
   month,
+  loading,
   onRefresh,
 }: {
   month: string;
+  loading?: boolean;
   onRefresh?: () => void;
 }) {
+
   const [rowData, setRowData] = useState<ExpenseRow[]>([]);
   const [selectedExpense, setSelectedExpense] = useState<ExpenseRow | null>(null);
   const [viewExpense, setViewExpense] = useState<ExpenseRow | null>(null);
   const [openAddExpense, setOpenAddExpense] = useState(false);
   const [deleteExpense, setDeleteExpense] = useState<ExpenseRow | null>(null);
   const [deleting, setDeleting] = useState(false);
-
+  
 
 
   const loadExpenses = useCallback(async () => {

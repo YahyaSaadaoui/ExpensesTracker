@@ -5,7 +5,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 
 const COOKIE_NAME = "et_session";
 
-const SESSION_SECRET = process.env.SESSION_SECRET;
+const SESSION_SECRET = process.env.SESSION_SECRET as string;
 if (!SESSION_SECRET) throw new Error("SESSION_SECRET is missing");
 
 export async function verifyAdminPassword(password: string): Promise<boolean> {
