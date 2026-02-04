@@ -162,8 +162,8 @@ export default function ExpensesTable({
   return (
     <>
       {/* HEADER */}
-      <div className="flex items-center justify-between">
-        <input
+      <div className="flex flex-wrap items-center gap-2">
+        {/*<input
           type="file"
           accept=".xlsx,.xls"
           onChange={async (e) => {
@@ -186,37 +186,52 @@ export default function ExpensesTable({
             onRefresh?.();
           }}
           className="text-sm text-white/70"
-        />
+        />*/}
 
         <button
-          onClick={() => setOpenAddExpense(true)}
-          className="btn-apple"
+        onClick={() => setOpenAddExpense(true)}
+        className="btn-apple"
         >
-          + Add Expense
+        + Add Expense
+        </button>
+
+        <button
+        onClick={() => {
+        window.location.href = `/api/export/expenses?month=${month}`;
+        }}
+        className="btn-apple"
+        >
+        Export CSV
         </button>
       </div>
 
       {/* TABLE */}
       <div className="rounded-2xl border border-white/10 bg-black/40 p-3 w-full overflow-x-auto">
-        <div
-          className="ag-theme-alpine-dark w-full min-w-[1200px]"
-          style={{ height: 620 }}
-        >
+      <div
+        className="
+          ag-theme-alpine-dark
+          w-full
+          min-w-[900px]
+          sm:min-w-[1100px]
+        "
+        style={{ height: "min(620px, 70vh)" }}
+      >
           <AgGridReact
             theme="legacy"
             rowData={rowData}
-            columnDefs={columns}
-            onCellValueChanged={onCellValueChanged}
-            defaultColDef={{
-              sortable: true,
-              filter: true,
-              resizable: true,
-              minWidth: 140,
-            }}
-            headerHeight={52}
-            rowHeight={52}
-            pagination
-            paginationPageSize={20}
+              columnDefs={columns}
+              onCellValueChanged={onCellValueChanged}
+              defaultColDef={{
+                sortable: true,
+                filter: true,
+                resizable: true,
+                minWidth: 120,
+                flex: 1,
+              }}
+              headerHeight={48}
+              rowHeight={48}
+              pagination
+              paginationPageSize={20}
           />
         </div>
       </div>

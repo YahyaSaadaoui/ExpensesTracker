@@ -5,6 +5,7 @@ import "@/lib/agGrid";
 import { useEffect, useState } from "react";
 import ExpensesTable from "./ExpensesTable";
 import MonthlyComparisonChart from "./MonthlyComparisonChart";
+import SpendingPieChart from "./SpendingPieChart";
 
 type ApiResp = {
   expenses: any[];
@@ -78,12 +79,24 @@ export default function DashboardClient() {
          ────────────────────────────── */}
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* Chart */}
-        <div className="rounded-3xl border border-white/10 bg-black/40 p-5">
-          <MonthlyComparisonChart
-            data={data?.expenses ?? []}
-            height={280}
-          />
-        </div>
+          <div className="rounded-3xl border border-white/10 bg-black/40 p-5">
+
+    {/* 🖥 Desktop: bar / comparison chart */}
+    <div className="hidden lg:block">
+      <MonthlyComparisonChart
+        data={data?.expenses ?? []}
+        height={280}
+      />
+    </div>
+
+    {/* 📱 Mobile: pie chart */}
+    <div className="block lg:hidden">
+      <SpendingPieChart
+        refreshKey={Number(month.replace("-", ""))}
+      />
+    </div>
+
+  </div>
 
         {/* Results */}
         <aside className="h-full space-y-4 rounded-3xl border border-white/10 bg-black/40 p-5">
