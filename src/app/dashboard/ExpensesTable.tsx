@@ -10,6 +10,7 @@ import AddConsumptionModal from "./AddConsumptionModal";
 import AddExpenseModal from "./AddExpenseModal";
 import ViewConsumptionsModal from "./ViewConsumptionsModal";
 import DeleteExpenseModal from "./DeleteExpenseModal";
+import MobileExpensesAccordion from "./MobileExpensesAccordion";
 
 type ExpenseRow = {
   id: string;
@@ -205,36 +206,53 @@ export default function ExpensesTable({
         </button>
       </div>
 
-      {/* TABLE */}
-      <div className="rounded-2xl border border-white/10 bg-black/40 p-3 w-full overflow-x-auto">
-      <div
-        className="
-          ag-theme-alpine-dark
-          w-full
-          min-w-[900px]
-          sm:min-w-[1100px]
-        "
-        style={{ height: "min(620px, 70vh)" }}
-      >
-          <AgGridReact
-            theme="legacy"
-            rowData={rowData}
-              columnDefs={columns}
-              onCellValueChanged={onCellValueChanged}
-              defaultColDef={{
-                sortable: true,
-                filter: true,
-                resizable: true,
-                minWidth: 120,
-                flex: 1,
-              }}
-              headerHeight={48}
-              rowHeight={48}
-              pagination
-              paginationPageSize={20}
-          />
-        </div>
-      </div>
+{/* TABLE CONTAINER */}
+<div className="rounded-2xl border border-white/10 bg-black/40 p-3 w-full">
+
+  {/* 🖥 Desktop table */}
+  <div className="hidden lg:block">
+    <div
+      className="ag-theme-alpine-dark w-full min-w-[900px] sm:min-w-[1100px]"
+      style={{ height: "min(620px, 70vh)" }}
+    >
+      <AgGridReact
+        theme="legacy"
+        rowData={rowData}
+        columnDefs={columns}
+        onCellValueChanged={onCellValueChanged}
+        defaultColDef={{
+          sortable: true,
+          filter: true,
+          resizable: true,
+          minWidth: 120,
+          flex: 1,
+        }}
+        headerHeight={48}
+        rowHeight={48}
+        pagination
+        paginationPageSize={20}
+      />
+    </div>
+  </div>
+
+  {/* 📱 Mobile accordion */}
+  <div className="block lg:hidden">
+    <MobileExpensesAccordion
+      expenses={rowData}
+      onAdd={setSelectedExpense}
+      onView={setViewExpense}
+      onDelete={async (id) => {
+        await fetch(`/api/expenses/${id}`, { method: "DELETE" })
+        loadExpenses()
+      }}
+      onUpdateBudget={async (id, value) => {
+        await updateExpense(id, { monthly_budget: value })
+      }}
+    />
+  </div>
+
+</div>
+
 
       {/* MODALS */}
       {openAddExpense && (
