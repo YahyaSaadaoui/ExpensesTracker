@@ -27,13 +27,6 @@ export default function AddExpenseModal({
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    setName("")
-    setBudget("")
-    setError("")
-    setLoading(false)
-  }, [])
-
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
@@ -48,14 +41,19 @@ export default function AddExpenseModal({
 
     try {
       setLoading(true)
+
       const res = await fetch("/api/expenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: trimmed, monthly_budget: value }),
+        body: JSON.stringify({
+          name: trimmed,
+          monthly_budget: value,
+        }),
       })
 
       if (!res.ok) {
-        setError("Failed to add expense")
+        const err = await res.json().catch(() => null)
+        setError(err?.error ?? "Failed to add expense")
         return
       }
 
@@ -67,11 +65,13 @@ export default function AddExpenseModal({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <form onSubmit={submit}>
-        <DialogContent className="sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm">
+        <form onSubmit={submit} className="space-y-4">
           <DialogHeader>
             <DialogTitle>Add expense</DialogTitle>
-            <DialogDescription>Create a new budget category for this month.</DialogDescription>
+            <DialogDescription>
+              Create a new budget category for this month.
+            </DialogDescription>
           </DialogHeader>
 
           <FieldGroup>
@@ -79,10 +79,9 @@ export default function AddExpenseModal({
               <Label htmlFor="expense-name">Name</Label>
               <Input
                 id="expense-name"
-                name="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Food"
+                placeholder="Ex: Home"
                 disabled={loading}
               />
             </Field>
@@ -91,12 +90,11 @@ export default function AddExpenseModal({
               <Label htmlFor="expense-budget">Monthly budget (DH)</Label>
               <Input
                 id="expense-budget"
-                name="budget"
                 type="number"
                 inputMode="decimal"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                placeholder="Ex: 1500"
+                placeholder="Ex: 5000"
                 disabled={loading}
               />
             </Field>
@@ -115,8 +113,8 @@ export default function AddExpenseModal({
               {loading ? "Saving…" : "Add"}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </form>
+        </form>
+      </DialogContent>
     </Dialog>
   )
 }

@@ -1,63 +1,113 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import SettingsModal from "./SettingsModal";
+import { useState } from "react"
+import { Settings2, LogOut, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import SettingsModal from "./SettingsModal"
 
-function SettingsIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <path
-        d="M19.4 15a7.9 7.9 0 0 0 .1-2l2-1.5-2-3.5-2.4 1a8.2 8.2 0 0 0-1.7-1l-.4-2.6H11l-.4 2.6a8.2 8.2 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7.9 7.9 0 0 0 .1 2l-2 1.5 2 3.5 2.4-1a8.2 8.2 0 0 0 1.7 1l.4 2.6h4l.4-2.6a8.2 8.2 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog"
 
 export default function Navbar() {
-  const [openSettings, setOpenSettings] = useState(false);
+  const [openSettings, setOpenSettings] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
 
   async function logout() {
-    await fetch("/api/logout", { method: "POST" });
-    window.location.href = "/login";
+    try {
+      setLoggingOut(true)
+      await fetch("/api/logout", { method: "POST" })
+      window.location.href = "/login"
+    } finally {
+      setLoggingOut(false)
+    }
   }
 
   return (
     <>
-      <header className="h-14 flex items-center justify-between px-6 border-b border-white/10 bg-black/40">
-       <span className="flex items-center gap-2 font-semibold text-white/90 whitespace-nowrap">
-        <img
-          src="/ExpensesTrackerLogo.png"
-          alt="Expense Tracker logo"
-          className="h-6 w-6 object-contain"
-        />
-        Expense Tracker
-      </span>
+      <header className="sticky top-0 z-40 h-14 flex items-center justify-between px-6 border-b border-border/40 bg-background/70 backdrop-blur">
+        {/* LEFT — LOGO ONLY */}
+        <div className="flex items-center">
+          <img
+            src="/ExpensesTrackerLogo.png"
+            alt="Expense Tracker"
+            className="h-20 object-contain pt-6 pb-6"
+          />
+        </div>
 
-
-        <div className="flex items-center gap-3">
-          <button
+        {/* RIGHT — ACTIONS */}
+        <div className="flex items-center gap-1">
+          {/* SETTINGS */}
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setOpenSettings(true)}
-            className="btn-apple"
-            title="Settings"
+            aria-label="Settings"
           >
-            <SettingsIcon />
-          </button>
+            <Settings2 className="h-5 w-5" />
+          </Button>
 
-          <button onClick={logout} className="btn-apple">
-            Logout
-          </button>
+          {/* LOGOUT (with confirmation) */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setConfirmLogout(true)}
+            aria-label="Logout"
+            disabled={loggingOut}
+          >
+            {loggingOut ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <LogOut className="h-5 w-5" />
+            )}
+          </Button>
         </div>
       </header>
 
-      {openSettings && <SettingsModal onClose={() => setOpenSettings(false)} />}
+      {/* SETTINGS MODAL */}
+      {openSettings && (
+        <SettingsModal onClose={() => setOpenSettings(false)} />
+      )}
+
+      {/* LOGOUT CONFIRMATION */}
+      <AlertDialog open={confirmLogout} onOpenChange={setConfirmLogout}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Log out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will need to enter the password again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loggingOut}>
+              Cancel
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              onClick={logout}
+              disabled={loggingOut}
+            >
+              {loggingOut ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Logging out…
+                </>
+              ) : (
+                "Logout"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
-  );
+  )
 }

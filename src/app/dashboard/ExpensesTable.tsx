@@ -98,7 +98,7 @@ export default function ExpensesTable({
 
   // pagination
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(30)
 
   // keyboard navigation
   const [focusedId, setFocusedId] = useState<string | null>(null)

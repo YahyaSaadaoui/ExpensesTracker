@@ -1,71 +1,70 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Field, FieldGroup } from "@/components/ui/field"
 
 type Settings = {
-  salary: number;
-  monthStartDay: number;
-};
+  salary: number
+  monthStartDay: number
+}
 
 export default function SettingsCard({
   onUpdated,
 }: {
-  onUpdated?: () => void;
+  onUpdated?: () => void
 }) {
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [settings, setSettings] = useState<Settings | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   useEffect(() => {
-    (async () => {
-      const res = await fetch("/api/settings");
-      if (!res.ok) return;
-      setSettings(await res.json());
-    })();
-  }, []);
+    ;(async () => {
+      const res = await fetch("/api/settings")
+      if (!res.ok) return
+      setSettings(await res.json())
+    })()
+  }, [])
 
   async function save() {
-    if (!settings) return;
+    if (!settings) return
 
-    setLoading(true);
-    setError("");
+    setLoading(true)
+    setError("")
 
     const res = await fetch("/api/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings),
-    });
+    })
 
-    setLoading(false);
+    setLoading(false)
 
     if (!res.ok) {
-      setError("Failed to save settings");
-      return;
+      setError("Failed to save settings")
+      return
     }
 
-    onUpdated?.();
+    onUpdated?.()
   }
 
   if (!settings) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
+      <div className="text-sm text-muted-foreground">
         Loading settings…
       </div>
-    );
+    )
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900">
-        Settings
-      </h2>
-
-      <div className="space-y-3">
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">
-            Monthly salary (DH)
-          </label>
-          <input
+    <div className="space-y-6">
+      <FieldGroup>
+        <Field>
+          <Label htmlFor="salary">Monthly salary (DH)</Label>
+          <Input
+            id="salary"
             type="number"
             value={settings.salary}
             onChange={(e) =>
@@ -74,15 +73,13 @@ export default function SettingsCard({
                 salary: Number(e.target.value),
               })
             }
-            className="w-full rounded-lg border text-black border-gray-300 px-3 py-2"
           />
-        </div>
+        </Field>
 
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">
-            Month starts on day
-          </label>
-          <input
+        <Field>
+          <Label htmlFor="monthStart">Month starts on day</Label>
+          <Input
+            id="monthStart"
             type="number"
             min={1}
             max={31}
@@ -93,36 +90,24 @@ export default function SettingsCard({
                 monthStartDay: Number(e.target.value),
               })
             }
-            className="w-full rounded-lg border text-black border-gray-300 px-3 py-2"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-muted-foreground">
             Example: 28 → month runs from 28 to 27
           </p>
-        </div>
-      </div>
+        </Field>
+      </FieldGroup>
 
       {error && (
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-destructive">
           {error}
         </p>
       )}
 
       <div className="flex justify-end">
-        <button
-          onClick={save}
-          disabled={loading}
-          className="
-            px-4 py-2
-            rounded-lg
-            bg-gray-900 text-white
-            hover:bg-gray-800
-            transition
-            disabled:opacity-50
-          "
-        >
+        <Button onClick={save} disabled={loading}>
           {loading ? "Saving…" : "Save settings"}
-        </button>
+        </Button>
       </div>
     </div>
-  );
+  )
 }
