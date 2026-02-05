@@ -1,76 +1,122 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Field, FieldGroup } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function AddExpenseModal({
   onClose,
   onAdded,
 }: {
-  onClose: () => void;
-  onAdded: () => void;
+  onClose: () => void
+  onAdded: () => void
 }) {
-  const [name, setName] = useState("");
-  const [budget, setBudget] = useState("");
-  const [error, setError] = useState("");
+  const [name, setName] = useState("")
+  const [budget, setBudget] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setName("")
+    setBudget("")
+    setError("")
+    setLoading(false)
+  }, [])
 
   async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    setError("")
 
-    const value = Number(budget);
-    if (!name.trim() || value <= 0) {
-      setError("Invalid values");
-      return;
+    const trimmed = name.trim()
+    const value = Number(budget)
+
+    if (!trimmed || !Number.isFinite(value) || value <= 0) {
+      setError("Invalid values")
+      return
     }
 
-    const res = await fetch("/api/expenses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), monthly_budget: value }),
-    });
+    try {
+      setLoading(true)
+      const res = await fetch("/api/expenses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed, monthly_budget: value }),
+      })
 
-    if (!res.ok) {
-      setError("Failed to add expense");
-      return;
+      if (!res.ok) {
+        setError("Failed to add expense")
+        return
+      }
+
+      onAdded()
+    } finally {
+      setLoading(false)
     }
-
-    onAdded();
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center">
-      <form
-        onSubmit={submit}
-        className="w-full max-w-sm bg-zinc-950 p-6 rounded-2xl border border-white/10 space-y-4"
-      >
-        <h2 className="text-lg font-semibold text-white">Add Expense</h2>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <form onSubmit={submit}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Add expense</DialogTitle>
+            <DialogDescription>Create a new budget category for this month.</DialogDescription>
+          </DialogHeader>
 
-        <input
-          placeholder="Expense name"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white"
-        />
+          <FieldGroup>
+            <Field>
+              <Label htmlFor="expense-name">Name</Label>
+              <Input
+                id="expense-name"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex: Food"
+                disabled={loading}
+              />
+            </Field>
 
-        <input
-          type="number"
-          placeholder="Monthly budget (DH)"
-          value={budget}
-          onChange={e => setBudget(e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white"
-        />
+            <Field>
+              <Label htmlFor="expense-budget">Monthly budget (DH)</Label>
+              <Input
+                id="expense-budget"
+                name="budget"
+                type="number"
+                inputMode="decimal"
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                placeholder="Ex: 1500"
+                disabled={loading}
+              />
+            </Field>
+          </FieldGroup>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
-        <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl bg-white/10 text-white">
-            Cancel
-          </button>
-          <button className="px-4 py-2 rounded-xl bg-white text-black">
-            Add
-          </button>
-        </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline" disabled={loading}>
+                Cancel
+              </Button>
+            </DialogClose>
+
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving…" : "Add"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </form>
-    </div>
-  );
+    </Dialog>
+  )
 }

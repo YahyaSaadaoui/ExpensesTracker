@@ -1,4 +1,15 @@
-"use client";
+"use client"
+
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function DeleteExpenseModal({
   expenseName,
@@ -6,46 +17,40 @@ export default function DeleteExpenseModal({
   onConfirm,
   loading = false,
 }: {
-  expenseName: string;
-  onCancel: () => void;
-  onConfirm: () => void;
-  loading?: boolean;
+  expenseName: string
+  onCancel: () => void
+  onConfirm: () => void
+  loading?: boolean
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-2xl bg-zinc-950 border border-white/10 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-white">
-          Delete expense?
-        </h2>
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Delete expense?</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-foreground">{expenseName}</span>? <br />
+            All related consumptions will be removed.
+          </DialogDescription>
+        </DialogHeader>
 
-        <p className="text-sm text-white/70">
-          Are you sure you want to delete{" "}
-          <span className="font-semibold text-white">
-            {expenseName}
-          </span>
-          ?  
-          <br />
-          All related consumptions will be removed.
-        </p>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline" disabled={loading}>
+              Cancel
+            </Button>
+          </DialogClose>
 
-        <div className="flex justify-end gap-2 pt-4">
-          <button
-            onClick={onCancel}
-            disabled={loading}
-            className="px-4 py-2 rounded-xl bg-white/10 text-white hover:bg-white/15 transition"
-          >
-            Cancel
-          </button>
-
-          <button
+          <Button
+            type="button"
+            variant="destructive"
             onClick={onConfirm}
             disabled={loading}
-            className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-500 transition disabled:opacity-50"
           >
             {loading ? "Deleting…" : "Delete"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }

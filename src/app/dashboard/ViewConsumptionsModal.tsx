@@ -1,84 +1,168 @@
-"use client";
-import { useEffect, useState } from "react";
+"use client"
+
+import { useEffect, useState } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+type Consumption = {
+  id: string
+  amount: number
+  note?: string
+}
 
 export default function ViewConsumptionsModal({
   expense,
   onClose,
   onChanged,
-}: any) {
-  const [rows, setRows] = useState<any[]>([]);
+}: {
+  expense: { id: string; name: string }
+  onClose: () => void
+  onChanged: () => void
+}) {
+  const [rows, setRows] = useState<Consumption[]>([])
+  const [deleteConsumptionId, setDeleteConsumptionId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   async function load() {
-    const res = await fetch(`/api/consumptions?expense_id=${expense.id}`);
-    const json = await res.json();
-    setRows(json.consumptions ?? []);
+    const res = await fetch(`/api/consumptions?expense_id=${expense.id}`)
+    const json = await res.json()
+    setRows(json.consumptions ?? [])
   }
 
   useEffect(() => {
-    load();
-  }, []);
+    load()
+  }, [expense.id])
 
-  async function update(id: string, patch: any) {
+  async function updateConsumption(id: string, patch: Partial<Consumption>) {
     await fetch(`/api/consumptions/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(patch),
-    });
-    await load();
-    onChanged();
+    })
+
+    await load()
+    onChanged()
   }
 
-  async function remove(id: string) {
-    if (!confirm("Delete this consumption?")) return;
-    await fetch(`/api/consumptions/${id}`, { method: "DELETE" });
-    await load();
-    onChanged();
+  async function confirmDeleteConsumption() {
+    if (!deleteConsumptionId) return
+
+    try {
+      setDeleting(true)
+      await fetch(`/api/consumptions/${deleteConsumptionId}`, {
+        method: "DELETE",
+      })
+      setDeleteConsumptionId(null)
+      await load()
+      onChanged()
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex justify-center items-center">
-      <div className="w-full max-w-lg bg-zinc-950 p-6 rounded-2xl border border-white/10">
-        <h3 className="text-white font-semibold mb-4">
-          {expense.name} — Consumptions
-        </h3>
+    <>
+      {/* MAIN DIALOG */}
+      <Dialog open onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {expense.name} — Consumptions
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-3 max-h-[420px] overflow-y-auto">
-          {rows.map((r) => (
-            <div
-              key={r.id}
-              className="flex items-center gap-2 bg-white/5 p-3 rounded-xl"
-            >
-              <input
-                type="number"
-                defaultValue={r.amount}
-                onBlur={(e) =>
-                  update(r.id, { amount: Number(e.target.value) })
-                }
-                className="w-24 bg-black/40 rounded px-2 py-1 text-white"
-              />
-
-              <input
-                defaultValue={r.note ?? ""}
-                onBlur={(e) => update(r.id, { note: e.target.value })}
-                className="flex-1 bg-black/40 rounded px-2 py-1 text-white"
-              />
-
-              <button
-                onClick={() => remove(r.id)}
-                className="text-red-400 text-sm"
+          <div className="space-y-3 max-h-[420px] overflow-y-auto">
+            {rows.map((c) => (
+              <div
+                key={c.id}
+                className="flex items-center gap-2 rounded-xl bg-muted/40 p-3"
               >
-                Delete
-              </button>
-            </div>
-          ))}
-        </div>
+                <Input
+                  type="number"
+                  defaultValue={c.amount}
+                  className="w-24"
+                  onBlur={(e) =>
+                    updateConsumption(c.id, {
+                      amount: Number(e.target.value),
+                    })
+                  }
+                />
 
-        <div className="mt-4 flex justify-end">
-          <button onClick={onClose} className="btn-apple">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+                <Input
+                  defaultValue={c.note ?? ""}
+                  className="flex-1"
+                  placeholder="Note"
+                  onBlur={(e) =>
+                    updateConsumption(c.id, { note: e.target.value })
+                  }
+                />
+
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setDeleteConsumptionId(c.id)}
+                >
+                  Delete
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* DELETE CONSUMPTION CONFIRMATION */}
+      <AlertDialog
+        open={!!deleteConsumptionId}
+        onOpenChange={() => setDeleteConsumptionId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete this consumption?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone.  
+              The selected consumption entry will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteConsumption}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
 }

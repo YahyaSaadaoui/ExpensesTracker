@@ -1,94 +1,129 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Field, FieldGroup } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 type Props = {
-  expense: { id: string; name: string };
-  onClose: () => void;
-  onAdded: () => void;
-};
+  expense: { id: string; name: string }
+  onClose: () => void
+  onAdded: () => void
+}
 
-export default function AddConsumptionModal({ expense, onClose, onAdded }: Props) {
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function AddConsumptionModal({
+  expense,
+  onClose,
+  onAdded,
+}: Props) {
+  const [amount, setAmount] = useState("")
+  const [note, setNote] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
+  useEffect(() => {
+    setAmount("")
+    setNote("")
+    setError("")
+    setLoading(false)
+  }, [expense.id])
 
-    const value = Number(amount);
-    if (!value || value <= 0) {
-      setError("Amount must be greater than 0");
-      return;
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError("")
+
+    const value = Number(amount)
+    if (!Number.isFinite(value) || value <= 0) {
+      setError("Amount must be greater than 0")
+      return
     }
 
-    setLoading(true);
+    try {
+      setLoading(true)
 
-    const res = await fetch("/api/consumptions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ expense_id: expense.id, amount: value, note: note || undefined }),
-    });
+      const res = await fetch("/api/consumptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          expense_id: expense.id,
+          amount: value,
+          note: note.trim() || undefined,
+        }),
+      })
 
-    setLoading(false);
+      if (!res.ok) {
+        setError("Failed to add consumption")
+        return
+      }
 
-    if (!res.ok) {
-      setError("Failed to add consumption");
-      return;
+      onAdded()
+    } finally {
+      setLoading(false)
     }
-
-    onAdded();
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl space-y-5"
-      >
-        <div>
-          <h2 className="text-lg font-semibold text-white">Add consumption</h2>
-          <p className="text-sm text-white/60">{expense.name}</p>
-        </div>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <DialogHeader>
+            <DialogTitle>Add consumption</DialogTitle>
+            <DialogDescription>{expense.name}</DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-3">
-          <input
-            type="number"
-            placeholder="Amount (DH)"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20"
-          />
-          <input
-            type="text"
-            placeholder="Note (optional)"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20"
-          />
-        </div>
+          <FieldGroup>
+            <Field>
+              <Label htmlFor="amount">Amount (DH)</Label>
+              <Input
+                id="amount"
+                type="number"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Ex: 120"
+                disabled={loading}
+              />
+            </Field>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+            <Field>
+              <Label htmlFor="note">Note (optional)</Label>
+              <Input
+                id="note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Ex: Uber"
+                disabled={loading}
+              />
+            </Field>
+          </FieldGroup>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl px-4 py-2 text-sm font-medium bg-white/5 hover:bg-white/10 text-white border border-white/10 transition"
-          >
-            Cancel
-          </button>
+          {error && <p className="text-sm text-red-500">{error}</p>}
 
-          <button
-            disabled={loading}
-            className="rounded-xl px-4 py-2 text-sm font-medium bg-white text-black hover:bg-white/90 transition disabled:opacity-50"
-          >
-            {loading ? "Saving…" : "Add"}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving…" : "Add"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
 }
