@@ -1,148 +1,123 @@
 # ExpensesTracker
 
-ExpensesTracker is a small, open-source Next.js application to track personal or small-business expenses. It provides a modern UI (Next.js + React) and a set of API routes for CRUD operations, import/export, snapshots, summaries, and reports. The app is structured for easy local development and deployment and includes example server-side wiring for a Supabase backend.
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-ready-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-This README explains what the project is, how to set it up, how to run it, and how you (or students) can use and extend it.
+ExpensesTracker is a full-stack Next.js app for tracking expenses, consumptions, reports, snapshots, and import/export flows. It is built as a practical personal-finance dashboard and as a learning project for modern Next.js app-router patterns.
 
 ## Features
 
-- Create, read, update and delete expenses and consumptions.
-- Import/export expenses (CSV/JSON) and snapshots for backups.
-- Monthly summaries and simple reporting endpoints.
-- Authentication endpoints scaffolded (login/logout) — sample Supabase integration in `src/lib/supabaseServer.ts`.
-- Responsive UI with components for desktop and mobile dashboards.
+- Create, update, delete, import, and export expense records.
+- Track consumptions separately from general expenses.
+- Dashboard views for monthly summaries and reporting.
+- API routes for expenses, consumptions, reports, snapshots, import, and export.
+- Supabase server integration for persistence.
+- Responsive UI using React, Tailwind CSS, Radix-style components, charts, tables, and icons.
+- PDF and spreadsheet-oriented dependencies for reporting/export workflows.
 
-## Tech stack
+## Tech Stack
 
-- Next.js (app router)
-- React + TypeScript
-- Supabase (suggested; server integration present)
-- Tailwind / PostCSS (project configuration files present)
+| Area | Stack |
+| --- | --- |
+| Framework | Next.js 16, React 19, TypeScript |
+| Backend | Next.js API routes |
+| Database | Supabase |
+| UI | Tailwind CSS, Radix UI, Lucide, AG Grid, Recharts |
+| Data/export | xlsx, pdf-lib |
+| Auth/helpers | Supabase client, JWT, bcryptjs |
 
-## Who is this for?
+## Quick Start
 
-- Anyone who wants an example full-stack Next.js app for tracking expenses.
-- Teachers or students learning modern Next.js app-router patterns, API routes, and integrating a hosted DB (e.g., Supabase).
+### Prerequisites
 
-## Quick start (development)
+- Node.js 20+
+- npm, pnpm, or yarn
+- Optional: Supabase project for persistent data
 
-Prerequisites:
-
-- Node.js 18+ (or use the project's `use-node25.bat` if needed)
-- npm, yarn, or pnpm
-- (Optional) Supabase project if you want persistence across runs
-
-1. Clone the repo
+### Install
 
 ```bash
 git clone https://github.com/YahyaSaadaoui/ExpensesTracker.git
 cd ExpensesTracker
-```
-
-1. Install dependencies
-
-```bash
 npm install
-# or
-pnpm install
-# or
-yarn
 ```
 
+### Configure Environment
 
-1. Environment variables
-
-Create a `.env.local` file at the project root with the variables your setup requires. Example variables used by this project (adjust names to match the code in `src/lib` when necessary):
+Create `.env.local` in the project root:
 
 ```env
-# If you use Supabase for auth and DB
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=public-anon-key
-SUPABASE_SERVICE_ROLE_KEY=service-role-key   # only for server-side operations if used
-
-# Optional: NEXTAUTH_URL or other provider settings if you wire a provider
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-Notes:
+The server-side Supabase client reads these variables from `src/lib/supabaseServer.ts`.
 
-The repo contains `src/lib/supabaseServer.ts` as an example; check that file for the exact env variable names the code expects and adjust `.env.local` accordingly.
-
-1. Run the dev server
+### Run Development Server
 
 ```bash
 npm run dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open:
 
-## Project layout (important files)
+```text
+http://localhost:3000
+```
 
-- `src/app/` — Next.js app router pages and API route placeholders.
-  - `app/api/` — API route implementations (expenses, consumptions, import/export, reports, snapshots, etc.)
-  - `app/dashboard/` — dashboard pages and React components
-- `src/lib/` — helper libraries: `supabaseServer.ts`, `auth.ts`, `money.ts`, `period.ts`, and utility functions
-- `public/` — static assets
-
-Explore the `app/api` routes to see how server functions are structured in the app-router.
-
-## How to use (end-user flow)
-
-1. Sign in using the provided auth flow (if configured) or run locally with a mock user.
-2. Use the dashboard to add expenses or consumptions via the `AddExpenseModal` or `AddConsumptionModal` components.
-3. Browse, edit or delete entries in the `ExpensesTable` or use mobile views.
-4. Export or import expenses from the `app/api/import/expenses` and `app/api/export/expenses` endpoints.
-
-## Teaching notes / suggested exercises
-
-These make good step-by-step learning tasks for students:
-
-1. Wire a Supabase project: create a free Supabase instance and set the env vars. Verify the API routes persist data.
-2. Add validation to the import endpoint to show how to validate CSV/JSON payloads.
-3. Add unit tests for a small helper in `src/lib/money.ts` or `src/lib/period.ts`.
-4. Create a new report endpoint (e.g., yearly summary) and add a small dashboard card to visualize it.
-
-## Testing
-
-This project does not include a test suite by default. To add tests, consider adding Jest or Vitest and write quick unit tests for `src/lib` helpers. Example quick setup with Vitest:
+## Available Scripts
 
 ```bash
-npm i -D vitest @testing-library/react @testing-library/jest-dom
-# add a test script in package.json: "test": "vitest"
+npm run dev      # start local development server
+npm run build    # build production app
+npm run start    # start production server
+npm run lint     # run ESLint
 ```
 
-## Build & production
+## Project Layout
 
-Build the project:
+```text
+src/
+├── app/
+│   ├── api/           # API routes for expenses, reports, auth, import/export
+│   └── dashboard/     # dashboard pages and UI flows
+├── components/        # reusable interface components
+└── lib/               # auth, Supabase, money, date/period, and utility helpers
 
-```bash
-npm run build
-npm start
+public/                # static assets
 ```
 
-Deploy to Vercel or other Node-compatible hosting. If you use Vercel, the `app` directory and Next.js settings should work out of the box. Ensure env vars are configured in the hosting provider.
+## Example User Flow
 
-## Contributing
+1. Configure Supabase environment variables.
+2. Start the local app with `npm run dev`.
+3. Add expenses or consumptions from the dashboard.
+4. Review summaries and reports.
+5. Export or import data for backups and migration.
 
-Contributions are welcome. A simple workflow:
+## Good First Improvements
 
-1. Fork the repo
-2. Create a feature branch
-3. Open a pull request describing the change and include screenshots or tests when appropriate
+- Add validation around CSV/JSON import payloads.
+- Add unit tests for helpers in `src/lib`.
+- Add a yearly summary endpoint and chart.
+- Add a screenshot section to this README.
+- Add sample Supabase schema SQL.
+- Improve empty, loading, and error states in dashboard tables.
 
-If you plan bigger changes (DB schema changes, auth changes), open an issue first to discuss the design.
+## Deployment
+
+The app can be deployed to Vercel or another Node-compatible host.
+
+Before deploying, configure the required Supabase environment variables in the hosting provider:
+
+```env
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+```
 
 ## License
 
-This project is licensed under the MIT License — see the `LICENSE` file for details. You are free to use, modify, and distribute this project for personal, educational, or commercial projects.
-
----
-
-If you want, I can also:
-
-- Add a small `LICENSE` file (MIT) at repository root (I will add it now).
-- Add a small example `.env.example` with the minimal env vars needed.
-- Add a tiny unit test for a helper in `src/lib`.
-
-Tell me which of those you'd like next.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
